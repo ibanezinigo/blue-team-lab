@@ -125,9 +125,7 @@ NOT DETERMINABLE:
 attacker intent from Sysmon alone
 ```
 
-Preferred wording:
 
-> The installer modified creation timestamps across multiple staged artifacts. For `main1.msi`, the assigned timestamp closely matches the creation timestamp independently reported by VirusTotal for the same SHA256, suggesting that at least some timestamp changes may reflect preservation or restoration of original packaged timestamps rather than purely anti-forensic timestomping.
 
 ## Staging Cleanup
 

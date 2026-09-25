@@ -2,8 +2,6 @@
 
 ## Objective
 
-The investigation began without assuming the answer to the challenge.
-
 ```text
 inventory event types
 → inspect high-value telemetry
@@ -111,8 +109,6 @@ DESKTOP-887GK2L\CyberJunkie
 IntegrityLevel:
 Medium
 ```
-
-This is consistent with interactive execution from Explorer. The exact GUI action cannot be proven from Sysmon alone.
 
 ## Main Pivot
 

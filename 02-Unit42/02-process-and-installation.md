@@ -18,9 +18,7 @@ ProcessGUID:
 The executable staged:
 
 ```text
-C:\Users\CyberJunkie\AppData\Roaming\
-Photo and Fax Vn\Photo and vn 1.1.2\
-install\F97891C\main1.msi
+C:\Users\CyberJunkie\AppData\Roaming\Photo and Fax Vn\Photo and vn 1.1.2\install\F97891C\main1.msi
 ```
 
 ## Named Pipe
