@@ -1,6 +1,6 @@
 # 03 — Network and Persistence Assessment
 
-## DNS Activity
+## DNS and Network
 
 The suspicious process queried:
 
@@ -8,53 +8,20 @@ The suspicious process queried:
 www.example.com
 ```
 
-Observed process:
+and initiated:
 
 ```text
-C:\Users\CyberJunkie\Downloads\Preventivo24.02.14.exe.exe
+Protocol: TCP
+Source: 172.17.79.132:61177
+Destination: 93.184.216.34:80
+Initiated: True
 ```
 
-Resolved address included:
-
-```text
-93.184.216.34
-```
-
----
-
-## Network Connection
-
-The same process initiated:
-
-```text
-Protocol:
-TCP
-
-Source:
-172.17.79.132:61177
-
-Destination:
-93.184.216.34:80
-
-Initiated:
-True
-```
-
-### Assessment
-
-Outbound network activity from the suspicious process is confirmed.
-
-However, the available evidence does not justify classifying this destination as command-and-control.
-
-The safest conclusion is:
-
-> The suspicious executable performed outbound DNS and TCP activity.
-
----
+Outbound network activity is confirmed, but this evidence does not justify calling the destination command-and-control.
 
 ## Persistence Investigation
 
-The investigation looked for evidence of:
+The investigation looked for:
 
 ```text
 Windows services
@@ -66,33 +33,23 @@ TaskCache
 WMI persistence
 ```
 
-No confirmed persistence mechanism was identified.
-
----
+No persistence mechanism was confirmed.
 
 ## Scheduled Task Indicator
 
-The suspicious executable loaded:
+The process loaded:
 
 ```text
 C:\Windows\SysWOW64\taskschd.dll
 ```
 
-Sysmon labeled the event:
-
-```text
-T1053 - Scheduled Task
-```
-
-### Important Limitation
-
-Loading `taskschd.dll` does not prove that a task was created.
+This shows Task Scheduler API interaction, not task creation.
 
 No supporting evidence was observed for:
 
 ```text
 schtasks.exe
-TaskCache registry changes
+TaskCache changes
 task XML creation
 task action referencing C:\Games
 ```
@@ -100,33 +57,18 @@ task action referencing C:\Games
 Therefore:
 
 ```text
-Scheduled Task persistence = NOT CONFIRMED
+Scheduled-task persistence = NOT CONFIRMED
 ```
-
----
 
 ## Service Creation Labels
 
-Several Sysmon events carried labels such as:
-
-```text
-T1543 - Service Creation
-```
-
-However, the associated registry paths were primarily:
+Several Sysmon registry events were labeled `T1543 - Service Creation`, but the target paths were primarily BAM entries:
 
 ```text
 HKLM\System\CurrentControlSet\Services\bam\State\UserSettings\...
 ```
 
-These BAM-related registry entries do not prove that a new Windows service was created.
-
-No evidence was observed resembling:
-
-```text
-HKLM\SYSTEM\CurrentControlSet\Services\<malicious service>\
-    ImagePath = C:\Games\taskhost.exe
-```
+BAM activity is not proof of a newly created service.
 
 Therefore:
 
@@ -134,28 +76,16 @@ Therefore:
 Service persistence = NOT CONFIRMED
 ```
 
----
-
 ## Certificate Store Activity
 
 The installer interacted with:
 
 ```text
-...\Software\Microsoft\SystemCertificates\CA\Certificates
-...\Software\Microsoft\SystemCertificates\Root\Certificates
+...\SystemCertificates\CA\Certificates
+...\SystemCertificates\Root\Certificates
 ```
 
-Sysmon mapped these events to:
-
-```text
-T1553.004 - Install Root Certificate
-```
-
-### Assessment
-
-The registry interaction is real.
-
-However, the supplied events do not identify a specific certificate being added.
+but the events do not identify a specific certificate being added.
 
 Therefore:
 
@@ -163,37 +93,28 @@ Therefore:
 Malicious root certificate installation = NOT CONFIRMED
 ```
 
----
-
 ## Remote Access Assessment
 
-The evidence contains multiple UltraVNC-related artifacts.
+VirusTotal identifies the hash of the deployed `taskhost.exe` as `WinVNC.exe`.
 
-The strongest defensible statement is:
-
-> The installer deployed or staged components consistent with UltraVNC-based remote-access functionality.
-
-What remains unconfirmed:
+This strongly supports remote-access capability being present, but does not prove:
 
 ```text
-remote-access process execution
+taskhost.exe execution
 listening VNC service
+automatic startup
 remote session
 operator connection
-persistent remote-access service
 ```
-
----
-
-## Evidence Confidence
 
 | Finding | Confidence |
 |---|---:|
 | Suspicious process performed DNS | High |
 | Suspicious process initiated TCP/80 | High |
-| Remote-access-related components present | High |
+| WinVNC / UltraVNC-related payload present | High |
+| Remote-access binary deployed | High |
+| VNC process executed | Not observed |
 | VNC session occurred | Not confirmed |
-| Scheduled task persistence | Not confirmed |
+| Scheduled-task persistence | Not confirmed |
 | Service persistence | Not confirmed |
-| Malicious root certificate | Not confirmed |
 | C2 communication | Not confirmed |

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This investigation analyzes a Sysmon event log from a Windows endpoint and reconstructs the execution of a suspicious installer named:
+This investigation analyzes a Windows Sysmon log and reconstructs the execution of:
 
 ```text
 C:\Users\CyberJunkie\Downloads\Preventivo24.02.14.exe.exe
@@ -11,16 +11,18 @@ C:\Users\CyberJunkie\Downloads\Preventivo24.02.14.exe.exe
 The investigation identified:
 
 - delivery through Dropbox using Firefox;
-- interactive user execution from `explorer.exe`;
+- interactive execution from an `explorer.exe` context;
 - MSI-based installation through `msiexec.exe`;
 - privileged Windows Installer activity running as `NT AUTHORITY\SYSTEM`;
-- deployment of several files into `C:\Games`;
-- staging of multiple UltraVNC-related components;
-- widespread creation-time manipulation consistent with timestomping;
+- deployment of multiple files into `C:\Games`;
+- WinVNC / UltraVNC-related remote-access components;
+- modification of creation timestamps across staged artifacts;
 - outbound DNS and TCP activity;
 - cleanup of staging artifacts after installation.
 
-The available telemetry supports the presence of remote-access functionality, but it does **not** prove that a remote-access session occurred or that a persistence mechanism was successfully created.
+VirusTotal enrichment strongly corroborates that the initial payload is WinVNC/UltraVNC-based and that the file deployed as `C:\Games\taskhost.exe` is the same binary VirusTotal identifies as `WinVNC.exe`.
+
+The supplied telemetry does **not** prove that the deployed VNC component executed, established persistence, or accepted a remote session.
 
 ---
 
@@ -38,6 +40,7 @@ Tools used:
 EvtxECmd
 Timeline Explorer
 PowerShell / Get-WinEvent
+VirusTotal (external enrichment)
 ```
 
 ---
@@ -47,10 +50,11 @@ PowerShell / Get-WinEvent
 - [01 — Initial Analysis](01-initial-analysis.md)
 - [02 — Process and Installation Analysis](02-process-and-installation.md)
 - [03 — Network and Persistence Assessment](03-network-and-persistence.md)
-- [04 — File Activity and Timestomping](04-file-activity-and-timestomping.md)
-- [05 — Timeline and Indicators](05-timeline-and-iocs.md)
-- [06 — Detection and Response](06-detection-and-response.md)
-- [07 — Lessons Learned](07-lessons-learned.md)
+- [04 — File Activity and Timestamp Analysis](04-file-activity-and-timestamps.md)
+- [05 — Threat Intelligence Enrichment](05-threat-intelligence-enrichment.md)
+- [06 — Timeline and Indicators](06-timeline-and-iocs.md)
+- [07 — Detection and Response](07-detection-and-response.md)
+- [08 — Lessons Learned](08-lessons-learned.md)
 
 ---
 
@@ -68,11 +72,11 @@ explorer.exe
   |
   +--> Preventivo24.02.14.exe.exe
           |
-          +--> stages MSI and additional artifacts
+          +--> stages main1.msi and additional files
           |
           +--> msiexec.exe /i main1.msi
                   |
-                  +--> Windows Installer
+                  +--> Windows Installer activity
                           |
                           +--> msiexec.exe [SYSTEM]
                                   |
@@ -83,29 +87,32 @@ explorer.exe
                                       ├── once.cmd
                                       ├── viewer.exe
                                       └── taskhost.exe
+                                          |
+                                          +--> hash externally identified as WinVNC.exe
 ```
 
 ---
 
 ## Key Conclusion
 
-The evidence supports the following sequence:
+The evidence supports:
 
 ```text
 Dropbox delivery
 → user execution
 → MSI installation
 → SYSTEM-level deployment
-→ timestomping
-→ remote-access-related components
+→ timestamp modification
+→ WinVNC / UltraVNC-related payload
 → staging cleanup
 ```
 
-The following were **not confirmed** in the supplied Sysmon telemetry:
+Not confirmed in the supplied telemetry:
 
 ```text
 persistent VNC service
 scheduled-task persistence
+execution of C:\Games\taskhost.exe
 actual VNC session
 remote operator activity
 credential dumping
@@ -114,4 +121,4 @@ malicious root certificate installation
 confirmed C2
 ```
 
-The investigation therefore remains evidence-driven and avoids treating Sysmon `RuleName` ATT&CK labels as proof of attacker behavior.
+This report deliberately separates observed evidence, analyst inference, external enrichment, and unconfirmed hypotheses.
